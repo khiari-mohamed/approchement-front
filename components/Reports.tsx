@@ -211,7 +211,7 @@ const Reports: React.FC<ReportsProps> = ({ result, onExport }) => {
 
           {/* AI Performance */}
           <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-6 rounded-lg">
-            <h3 className="text-lg font-semibold text-white mb-4">Surveillance AI (Gemini 2.0 Flash)</h3>
+            <h3 className="text-lg font-semibold text-white mb-4">Surveillance AI (Gemini → Claude → Backend)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="bg-purple-500/20 border border-purple-500/30 p-4 rounded-lg">
                 <div className="flex items-center justify-between">

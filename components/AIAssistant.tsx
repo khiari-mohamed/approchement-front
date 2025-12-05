@@ -88,10 +88,10 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onSuggestion }) => {
       <div className="px-6 py-4 border-b border-white/20">
         <h3 className="text-lg font-semibold flex items-center gap-2 text-white">
           <Bot className="w-5 h-5 text-purple-400 animate-pulse" />
-          Assistant IA Gemini
+          Assistant IA Multi-Modèles
         </h3>
         <p className="text-sm text-white/70 mt-1">
-          Assistance contrôlée - Validation manuelle requise
+          Gemini → Claude → Logique Backend (3-tier fallback)
         </p>
       </div>
 
@@ -295,7 +295,7 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ onSuggestion }) => {
           <div className="flex items-center justify-between text-xs text-white/70">
             <span className="flex items-center gap-1">
               <Bot className="w-3 h-3" />
-              Gemini 2.0 Flash
+              Gemini 2.0 → Claude 3.5
             </span>
             <span>Temperature: 0.1</span>
             <span className="flex items-center gap-1">
