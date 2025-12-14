@@ -44,10 +44,10 @@ export const parseCSV = (file: File): Promise<{ transactions: Transaction[], ini
         let montant = 0;
 
         if (montantIndex !== -1) {
-            montant = parseFloat(values[montantIndex].replace(',', '.').replace(/\s/g, '')) || 0;
+            montant = parseFloat(values[montantIndex].replace(/\./g, '').replace(',', '.').replace(/\s/g, '')) || 0;
         } else {
-            const debit = parseFloat(values[debitIndex]?.replace(',', '.').replace(/\s/g, '')) || 0;
-            const credit = parseFloat(values[creditIndex]?.replace(',', '.').replace(/\s/g, '')) || 0;
+            const debit = parseFloat(values[debitIndex]?.replace(/\./g, '').replace(',', '.').replace(/\s/g, '')) || 0;
+            const credit = parseFloat(values[creditIndex]?.replace(/\./g, '').replace(',', '.').replace(/\s/g, '')) || 0;
             montant = credit - debit;
         }
 
@@ -56,7 +56,7 @@ export const parseCSV = (file: File): Promise<{ transactions: Transaction[], ini
         }
         
         if (soldeIndex !== -1) {
-            const currentBalance = parseFloat(values[soldeIndex].replace(',', '.').replace(/\s/g, ''))
+            const currentBalance = parseFloat(values[soldeIndex].replace(/\./g, '').replace(',', '.').replace(/\s/g, ''))
             if (!isNaN(currentBalance)) {
                 lastValidBalance = currentBalance;
             }

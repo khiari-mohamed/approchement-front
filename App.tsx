@@ -309,22 +309,22 @@ const App: React.FC = () => {
                                 </div>
                                 <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-6 rounded-lg">
                                     <h3 className="text-sm font-medium text-white/70 mb-2">Rapprochements</h3>
-                                    <p className="text-3xl font-bold text-green-400">{result?.summary.matchedCount || 0}</p>
+                                    <p className="text-3xl font-bold text-green-400">{result?.summary?.matchedCount || 0}</p>
                                 </div>
                                 <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-6 rounded-lg">
                                     <h3 className="text-sm font-medium text-white/70 mb-2">En Suspens</h3>
-                                    <p className="text-3xl font-bold text-orange-400">{result?.summary.suspenseCount || 0}</p>
+                                    <p className="text-3xl font-bold text-orange-400">{result?.summary?.suspenseCount || 0}</p>
                                 </div>
                                 <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-6 rounded-lg">
                                     <h3 className="text-sm font-medium text-white/70 mb-2">Taux Couverture</h3>
-                                    <p className="text-3xl font-bold text-purple-400">{result ? (result.summary.coverageRatio * 100).toFixed(1) + '%' : '0%'}</p>
+                                    <p className="text-3xl font-bold text-purple-400">{result?.summary?.coverageRatio ? (result.summary.coverageRatio * 100).toFixed(1) + '%' : '0%'}</p>
                                 </div>
                             </div>
 
                             {/* Chart Visualization */}
                             <div className="bg-white/10 backdrop-blur-sm border border-white/20 p-6 rounded-lg">
                                 <h3 className="text-lg font-semibold text-white mb-4">Répartition des Transactions</h3>
-                                {result && (result.summary.matchedCount > 0 || result.summary.suspenseCount > 0) ? (
+                                {result?.summary && (result.summary.matchedCount > 0 || result.summary.suspenseCount > 0) ? (
                                     <div className="flex flex-col md:flex-row items-center justify-center gap-8">
                                         {/* Donut Chart */}
                                         <div className="relative w-64 h-64">
@@ -339,7 +339,7 @@ const App: React.FC = () => {
                                                     fill="none" 
                                                     stroke="#10b981" 
                                                     strokeWidth="40"
-                                                    strokeDasharray={`${(result.summary.matchedCount / (result.summary.matchedCount + result.summary.suspenseCount)) * 502.65} 502.65`}
+                                                    strokeDasharray={`${((result.summary?.matchedCount || 0) / ((result.summary?.matchedCount || 0) + (result.summary?.suspenseCount || 0))) * 502.65} 502.65`}
                                                     className="transition-all duration-1000"
                                                 />
                                                 {/* Suspense segment */}
@@ -350,13 +350,13 @@ const App: React.FC = () => {
                                                     fill="none" 
                                                     stroke="#f97316" 
                                                     strokeWidth="40"
-                                                    strokeDasharray={`${(result.summary.suspenseCount / (result.summary.matchedCount + result.summary.suspenseCount)) * 502.65} 502.65`}
-                                                    strokeDashoffset={`-${(result.summary.matchedCount / (result.summary.matchedCount + result.summary.suspenseCount)) * 502.65}`}
+                                                    strokeDasharray={`${((result.summary?.suspenseCount || 0) / ((result.summary?.matchedCount || 0) + (result.summary?.suspenseCount || 0))) * 502.65} 502.65`}
+                                                    strokeDashoffset={`-${((result.summary?.matchedCount || 0) / ((result.summary?.matchedCount || 0) + (result.summary?.suspenseCount || 0))) * 502.65}`}
                                                     className="transition-all duration-1000"
                                                 />
                                             </svg>
                                             <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                                <p className="text-4xl font-bold text-white">{result.summary.matchedCount + result.summary.suspenseCount}</p>
+                                                <p className="text-4xl font-bold text-white">{(result.summary?.matchedCount || 0) + (result.summary?.suspenseCount || 0)}</p>
                                                 <p className="text-sm text-white/70">Total</p>
                                             </div>
                                         </div>
@@ -366,15 +366,15 @@ const App: React.FC = () => {
                                             <div className="flex items-center gap-3">
                                                 <div className="w-4 h-4 rounded-full bg-green-500"></div>
                                                 <div>
-                                                    <p className="text-white font-semibold">{result.summary.matchedCount} Rapprochés</p>
-                                                    <p className="text-white/70 text-sm">{((result.summary.matchedCount / (result.summary.matchedCount + result.summary.suspenseCount)) * 100).toFixed(1)}%</p>
+                                                    <p className="text-white font-semibold">{result.summary?.matchedCount || 0} Rapprochés</p>
+                                                    <p className="text-white/70 text-sm">{(((result.summary?.matchedCount || 0) / ((result.summary?.matchedCount || 0) + (result.summary?.suspenseCount || 0))) * 100).toFixed(1)}%</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-3">
                                                 <div className="w-4 h-4 rounded-full bg-orange-500"></div>
                                                 <div>
-                                                    <p className="text-white font-semibold">{result.summary.suspenseCount} En Suspens</p>
-                                                    <p className="text-white/70 text-sm">{((result.summary.suspenseCount / (result.summary.matchedCount + result.summary.suspenseCount)) * 100).toFixed(1)}%</p>
+                                                    <p className="text-white font-semibold">{result.summary?.suspenseCount || 0} En Suspens</p>
+                                                    <p className="text-white/70 text-sm">{(((result.summary?.suspenseCount || 0) / ((result.summary?.matchedCount || 0) + (result.summary?.suspenseCount || 0))) * 100).toFixed(1)}%</p>
                                                 </div>
                                             </div>
                                         </div>
