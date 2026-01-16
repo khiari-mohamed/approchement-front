@@ -12,7 +12,15 @@ import Sidebar from './components/Sidebar';
 import ProtectedRoute from './components/ProtectedRoute';
 import RegularizationEntries from './components/RegularizationEntries';
 import Reports from './components/Reports';
-import { apiService, UploadResponse, MatchesResponse } from './services/apiService';
+import { LearningDashboard } from './components/LearningDashboard';
+import { apiService, MatchesResponse } from './services/apiService';
+
+interface UploadResponse {
+  fileId: string;
+  transactionCount: number;
+  message: string;
+  timestamp: string;
+}
 import type { Transaction, ReconciliationResult } from './types';
 
 const App: React.FC = () => {
@@ -30,11 +38,12 @@ const App: React.FC = () => {
 
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [loadingMessage, setLoadingMessage] = useState<string>('');
+    const [uploadProgress, setUploadProgress] = useState<number>(0);
     const [error, setError] = useState<string | null>(null);
     const [result, setResult] = useState<MatchesResponse | null>(null);
     const [currentJobId, setCurrentJobId] = useState<string | null>(null);
     const [isLoadingData, setIsLoadingData] = useState<boolean>(false);
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'upload' | 'config' | 'ai' | 'results' | 'regularization' | 'reports' | 'audit'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'upload' | 'config' | 'ai' | 'results' | 'learning' | 'regularization' | 'reports' | 'audit'>('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     
@@ -116,22 +125,74 @@ const App: React.FC = () => {
         setError(null);
         setResult(null);
         setIsLoading(true);
+        setUploadProgress(0);
         setLoadingMessage('Téléchargement du fichier bancaire...');
         
+        const progressInterval = setInterval(() => {
+            setUploadProgress(prev => Math.min(prev + 5, 90));
+        }, 300);
+        
         try {
-            // Verify token exists
             const currentToken = localStorage.getItem('auth_token');
             if (!currentToken) {
                 throw new Error('Session expirée. Veuillez vous reconnecter.');
             }
             const uploadResponse = await apiService.uploadBankFile(file);
-            setBankUpload(uploadResponse);
+            setUploadProgress(95);
+            setLoadingMessage('Traitement du fichier par l\'IA...');
+            
+            setBankUpload({
+                fileId: uploadResponse.fileId,
+                transactionCount: uploadResponse.transactionCount,
+                message: uploadResponse.message,
+                timestamp: uploadResponse.timestamp
+            });
+            
+            // Poll for transaction count if it's 0 (still processing)
+            if (uploadResponse.transactionCount === 0) {
+                let attempts = 0;
+                const pollInterval = setInterval(async () => {
+                    attempts++;
+                    if (attempts > 20) {
+                        clearInterval(pollInterval);
+                        setIsLoading(false);
+                        setLoadingMessage('');
+                        return;
+                    }
+                    try {
+                        const fileInfo = await apiService.getFileInfo(uploadResponse.fileId);
+                        if (fileInfo.transactionCount > 0) {
+                            setUploadProgress(100);
+                            setLoadingMessage('Extraction terminée!');
+                            setBankUpload(prev => prev ? {...prev, transactionCount: fileInfo.transactionCount} : null);
+                            clearInterval(pollInterval);
+                            setTimeout(() => {
+                                setIsLoading(false);
+                                setLoadingMessage('');
+                                setUploadProgress(0);
+                            }, 1000);
+                        }
+                    } catch (e) {
+                        console.error('Failed to poll file info:', e);
+                    }
+                }, 2000);
+            } else {
+                setUploadProgress(100);
+                setTimeout(() => {
+                    setIsLoading(false);
+                    setLoadingMessage('');
+                    setUploadProgress(0);
+                }, 1000);
+            }
         } catch (e: any) {
             setError(`Erreur dans le fichier bancaire: ${e.message}`);
             setBankUpload(null);
-        } finally {
+            clearInterval(progressInterval);
             setIsLoading(false);
             setLoadingMessage('');
+            setUploadProgress(0);
+        } finally {
+            clearInterval(progressInterval);
         }
     }, []);
 
@@ -140,22 +201,74 @@ const App: React.FC = () => {
         setError(null);
         setResult(null);
         setIsLoading(true);
+        setUploadProgress(0);
         setLoadingMessage('Téléchargement du fichier comptable...');
         
+        const progressInterval = setInterval(() => {
+            setUploadProgress(prev => Math.min(prev + 5, 90));
+        }, 300);
+        
         try {
-            // Verify token exists
             const currentToken = localStorage.getItem('auth_token');
             if (!currentToken) {
                 throw new Error('Session expirée. Veuillez vous reconnecter.');
             }
             const uploadResponse = await apiService.uploadAccountingFile(file);
-            setAccountingUpload(uploadResponse);
+            setUploadProgress(95);
+            setLoadingMessage('Traitement du fichier par l\'IA...');
+            
+            setAccountingUpload({
+                fileId: uploadResponse.fileId,
+                transactionCount: uploadResponse.transactionCount,
+                message: uploadResponse.message,
+                timestamp: uploadResponse.timestamp
+            });
+            
+            // Poll for transaction count if it's 0 (still processing)
+            if (uploadResponse.transactionCount === 0) {
+                let attempts = 0;
+                const pollInterval = setInterval(async () => {
+                    attempts++;
+                    if (attempts > 20) {
+                        clearInterval(pollInterval);
+                        setIsLoading(false);
+                        setLoadingMessage('');
+                        return;
+                    }
+                    try {
+                        const fileInfo = await apiService.getFileInfo(uploadResponse.fileId);
+                        if (fileInfo.transactionCount > 0) {
+                            setUploadProgress(100);
+                            setLoadingMessage('Extraction terminée!');
+                            setAccountingUpload(prev => prev ? {...prev, transactionCount: fileInfo.transactionCount} : null);
+                            clearInterval(pollInterval);
+                            setTimeout(() => {
+                                setIsLoading(false);
+                                setLoadingMessage('');
+                                setUploadProgress(0);
+                            }, 1000);
+                        }
+                    } catch (e) {
+                        console.error('Failed to poll file info:', e);
+                    }
+                }, 2000);
+            } else {
+                setUploadProgress(100);
+                setTimeout(() => {
+                    setIsLoading(false);
+                    setLoadingMessage('');
+                    setUploadProgress(0);
+                }, 1000);
+            }
         } catch (e: any) {
             setError(`Erreur dans le fichier comptable: ${e.message}`);
             setAccountingUpload(null);
-        } finally {
+            clearInterval(progressInterval);
             setIsLoading(false);
             setLoadingMessage('');
+            setUploadProgress(0);
+        } finally {
+            clearInterval(progressInterval);
         }
     }, []);
 
@@ -178,29 +291,41 @@ const App: React.FC = () => {
             }
             
             // Start reconciliation with custom rules
-            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/reconcile`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${currentToken}`
-                },
-                body: JSON.stringify({
-                    bank_file: bankUpload.uploadId,
-                    accounting_file: accountingUpload.uploadId,
-                    rules: reconciliationRules
-                })
-            });
+            const reconcileResponse = await apiService.startReconciliation(
+                bankUpload.fileId,
+                accountingUpload.fileId,
+                reconciliationRules
+            );
             
-            if (!response.ok) {
-                const error = await response.json();
-                throw new Error(error.detail || 'Reconciliation failed');
-            }
+            setCurrentJobId(reconcileResponse.reconciliationId);
             
-            const reconcileResponse = await response.json();
-            setCurrentJobId(reconcileResponse.jobId);
-            
-            // Get the results
-            const matchesResponse = await apiService.getMatches(reconcileResponse.jobId);
+            // Transform response to match MatchesResponse interface
+            const matchesResponse: MatchesResponse = {
+                jobId: reconcileResponse.reconciliationId,
+                summary: reconcileResponse.summary,
+                matches: reconcileResponse.matches.map((m: any) => ({
+                    id: m.id,
+                    bankTx: m.bankTransaction,
+                    accountingTx: m.accountingTransaction,
+                    accountingTxs: m.accountingTransactions,
+                    score: m.score,
+                    rule: m.rule,
+                    status: m.status || 'matched',
+                    aiConfidence: m.aiConfidence
+                })),
+                suspense: reconcileResponse.suspenseItems.map((s: any) => ({
+                    id: s.id,
+                    transaction: s.transaction,
+                    transactionId: s.transactionId,
+                    transactionType: s.transactionType,
+                    type: s.transactionType,
+                    reason: s.reason,
+                    suggestedCategory: s.suggestedCategory,
+                    suggestedAccount: s.suggestedAccount,
+                    aiConfidence: s.aiConfidence,
+                    status: s.status
+                }))
+            };
             setResult(matchesResponse);
             setActiveTab('results');
         } catch (e: any) {
@@ -215,7 +340,16 @@ const App: React.FC = () => {
         if (!currentJobId) return;
         
         try {
+            // Validate the match
             await apiService.validateMatch(currentJobId, matchId, action, accountCode);
+            
+            // Trigger learning from validation
+            const match = result?.matches.find(m => m.id === matchId);
+            if (match) {
+                const isCorrect = action === 'confirm';
+                await apiService.recordLearning(matchId, isCorrect, match.bankTx, match.accountingTx, match.rule);
+            }
+            
             // Refresh results
             const updatedResults = await apiService.getMatches(currentJobId);
             setResult(updatedResults);
@@ -261,7 +395,7 @@ const App: React.FC = () => {
     return (
         <div className="min-h-screen font-sans flex relative overflow-hidden">
             <div className="relative z-10 flex w-full">
-            {isLoading && <Loader message={loadingMessage} />}
+            {isLoading && <Loader message={loadingMessage} progress={uploadProgress} />}
             
             {/* Sidebar with transparent background */}
             <Sidebar 
@@ -292,6 +426,7 @@ const App: React.FC = () => {
                             {activeTab === 'config' && 'Configuration'}
                             {activeTab === 'ai' && 'Assistant IA'}
                             {activeTab === 'results' && 'Résultats'}
+                            {activeTab === 'learning' && '🧠 AI Learning Dashboard'}
                             {activeTab === 'regularization' && 'Écritures de Régularisation'}
                             {activeTab === 'reports' && 'Rapports'}
                             {activeTab === 'audit' && 'Audit Logs'}
@@ -456,10 +591,10 @@ const App: React.FC = () => {
                                     <div className="mt-6 p-4 bg-green-500/20 border border-green-500/30 rounded-lg">
                                         <h3 className="font-medium text-green-300 mb-2">Fichiers Chargés:</h3>
                                         {bankUpload && (
-                                            <p className="text-sm text-green-200">✓ Bancaire: {bankUpload.filename} ({bankUpload.rowsCount} transactions)</p>
+                                            <p className="text-sm text-green-200">✓ Bancaire: {bankFile?.name} ({bankUpload.transactionCount > 0 ? `${bankUpload.transactionCount} transactions` : 'En cours de traitement...'})</p>
                                         )}
                                         {accountingUpload && (
-                                            <p className="text-sm text-green-200">✓ Comptable: {accountingUpload.filename} ({accountingUpload.rowsCount} écritures)</p>
+                                            <p className="text-sm text-green-200">✓ Comptable: {journalFile?.name} ({accountingUpload.transactionCount > 0 ? `${accountingUpload.transactionCount} écritures` : 'En cours de traitement...'})</p>
                                         )}
                                     </div>
                                 )}
@@ -504,6 +639,10 @@ const App: React.FC = () => {
                                 </button>
                             </div>
                         )
+                    )}
+                    
+                    {activeTab === 'learning' && (
+                        <LearningDashboard />
                     )}
                     
                     {activeTab === 'regularization' && (

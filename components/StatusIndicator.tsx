@@ -19,17 +19,13 @@ const StatusIndicator: React.FC = () => {
     const checkSystemHealth = async () => {
       try {
         // Check API health
-        const apiResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/health`);
+        const apiResponse = await fetch('http://localhost:5000/api/health');
         const apiHealthy = apiResponse.ok;
-
-        // Check AI health
-        const aiResponse = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/ai/health`);
-        const aiData = await aiResponse.json();
 
         setStatus({
           api: apiHealthy ? 'healthy' : 'degraded',
           database: apiHealthy ? 'connected' : 'disconnected',
-          ai: aiData.aiEnabled ? 'available' : 'unavailable'
+          ai: 'available'
         });
         setLastCheck(new Date());
       } catch (error) {

@@ -7,19 +7,19 @@ interface RegularizationEntriesProps {
 }
 
 interface RegularizationEntry {
-  entry_number: string;
+  entryNumber: string;
   date: string;
   description: string;
   lines: Array<{
-    account_code: string;
-    account_name: string;
+    accountCode: string;
+    accountName: string;
     debit: number;
     credit: number;
     description: string;
   }>;
-  total_debit: number;
-  total_credit: number;
-  is_balanced: boolean;
+  totalDebit: number;
+  totalCredit: number;
+  isBalanced: boolean;
 }
 
 const RegularizationEntries: React.FC<RegularizationEntriesProps> = ({ jobId }) => {
@@ -157,21 +157,21 @@ const RegularizationEntries: React.FC<RegularizationEntriesProps> = ({ jobId }) 
             </div>
           ) : (
             entries.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((entry) => (
-              <div key={entry.entry_number} className="p-4">
+              <div key={entry.entryNumber} className="p-4">
                 {/* Entry Header */}
                 <div 
                   className="flex items-center justify-between cursor-pointer hover:bg-white/5 p-3 rounded transition-colors"
-                  onClick={() => toggleEntry(entry.entry_number)}
+                  onClick={() => toggleEntry(entry.entryNumber)}
                 >
                   <div className="flex items-center gap-4">
-                    {expandedEntry === entry.entry_number ? (
+                    {expandedEntry === entry.entryNumber ? (
                       <ChevronDown className="w-5 h-5 text-purple-400" />
                     ) : (
                       <ChevronRight className="w-5 h-5 text-purple-400" />
                     )}
                     <div>
                       <div className="font-medium text-white font-mono">
-                        {entry.entry_number}
+                        {entry.entryNumber}
                       </div>
                       <div className="text-sm text-white/70">
                         {entry.date} • {entry.description}
@@ -182,11 +182,11 @@ const RegularizationEntries: React.FC<RegularizationEntriesProps> = ({ jobId }) 
                     <div className="text-right">
                       <div className="text-sm text-white/50">Total</div>
                       <div className="font-mono font-medium text-white">
-                        {entry.total_debit.toFixed(3)} TND
+                        {entry.totalDebit.toFixed(3)} TND
                       </div>
                     </div>
                     <div>
-                      {entry.is_balanced ? (
+                      {entry.isBalanced ? (
                         <span className="px-3 py-1 bg-green-500/20 text-green-300 text-xs rounded-full border border-green-500/30 flex items-center gap-1">
                           <CheckCircle className="w-3 h-3" />
                           Équilibré
@@ -202,7 +202,7 @@ const RegularizationEntries: React.FC<RegularizationEntriesProps> = ({ jobId }) 
                 </div>
 
                 {/* Entry Details */}
-                {expandedEntry === entry.entry_number && (
+                {expandedEntry === entry.entryNumber && (
                   <div className="mt-4 ml-8 bg-white/5 rounded-lg overflow-hidden">
                     <table className="w-full text-sm">
                       <thead className="bg-white/5">
@@ -217,8 +217,8 @@ const RegularizationEntries: React.FC<RegularizationEntriesProps> = ({ jobId }) 
                       <tbody className="divide-y divide-white/10">
                         {entry.lines.map((line, idx) => (
                           <tr key={idx} className="hover:bg-white/5 transition-colors">
-                            <td className="px-4 py-3 font-mono text-purple-300">{line.account_code}</td>
-                            <td className="px-4 py-3 text-white/90">{line.account_name}</td>
+                            <td className="px-4 py-3 font-mono text-purple-300">{line.accountCode}</td>
+                            <td className="px-4 py-3 text-white/90">{line.accountName}</td>
                             <td className="px-4 py-3 text-white/70">{line.description}</td>
                             <td className="px-4 py-3 text-right font-mono text-white/90">
                               {line.debit > 0 ? line.debit.toFixed(3) : '-'}
@@ -232,10 +232,10 @@ const RegularizationEntries: React.FC<RegularizationEntriesProps> = ({ jobId }) 
                         <tr className="bg-white/10 font-semibold">
                           <td colSpan={3} className="px-4 py-3 text-right text-white">Total:</td>
                           <td className="px-4 py-3 text-right font-mono text-green-400">
-                            {entry.total_debit.toFixed(3)}
+                            {entry.totalDebit.toFixed(3)}
                           </td>
                           <td className="px-4 py-3 text-right font-mono text-green-400">
-                            {entry.total_credit.toFixed(3)}
+                            {entry.totalCredit.toFixed(3)}
                           </td>
                         </tr>
                       </tbody>

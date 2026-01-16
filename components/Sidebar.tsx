@@ -11,7 +11,8 @@ import {
   LogOut,
   User,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Brain
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -32,6 +33,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange, user, onLogou
     { id: 'config', label: 'Configuration', icon: Settings },
     { id: 'ai', label: 'Assistant IA', icon: Bot },
     { id: 'results', label: 'Résultats', icon: TrendingUp },
+    { id: 'learning', label: 'AI Learning', icon: Brain },
     { id: 'regularization', label: 'Écritures Régul.', icon: FileText },
     { id: 'reports', label: 'Rapports', icon: FileBarChart },
     ...(user?.role === 'admin' ? [{ id: 'audit', label: 'Audit Logs', icon: Search }] : [])

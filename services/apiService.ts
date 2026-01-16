@@ -1,20 +1,27 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+import { AxiosError } from 'axios';
+import axiosClient from './axiosClient';
 
 export interface UploadResponse {
-  uploadId: string;
-  filename: string;
-  rowsCount: number;
-  preview?: any[];
+  fileId: string;
+  transactionCount: number;
+  message: string;
+  timestamp: string;
 }
 
 export interface ReconcileResponse {
-  jobId: string;
-  status: string;
+  reconciliationId: string;
+  summary: any;
+  matches: any[];
+  suspenseItems: any[];
+  gapCalculations: any;
+  validationResult: any;
+  processingMetrics: any;
 }
 
 export interface MatchesResponse {
   jobId: string;
   summary: {
+    reconciliationId: string;
     bankTotal: number;
     accountingTotal: number;
     matchedCount: number;
@@ -22,14 +29,21 @@ export interface MatchesResponse {
     initialGap: number;
     residualGap: number;
     coverageRatio: number;
-    openingBalance: number;
-    aiAssistedMatches?: number;
+    explainedGap: number;
+    coveragePercentage: number;
+    validationValid: boolean;
+    validationErrors: number;
+    status: string;
+    createdAt: Date;
   };
   matches: Array<{
     id: string;
-    bankTx: any;
+    bankTx?: any;
+    bankTransaction?: any;
     accountingTx?: any;
+    accountingTransaction?: any;
     accountingTxs?: any[];
+    accountingTransactions?: any[];
     score: number;
     rule: string;
     status: string;
@@ -37,159 +51,179 @@ export interface MatchesResponse {
     aiConfidence?: number;
   }>;
   suspense?: Array<{
-    transaction: any;
+    id: string;
+    transaction?: any;
+    transactionId: string;
+    transactionType: string;
     type: string;
     reason: string;
     suggestedCategory?: string;
+    suggestedAccount?: string;
     aiConfidence?: number;
+    status: string;
   }>;
-  pagination?: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
+  gapCalculations?: any;
+  validationResult?: any;
 }
 
 class ApiService {
-  private getAuthHeaders() {
-    const token = localStorage.getItem('auth_token');
-    return token ? { 'Authorization': `Bearer ${token}` } : {};
+  private client = axiosClient.getClient();
+
+  private handleError(error: AxiosError): never {
+    const message = (error.response?.data as any)?.message || error.message || 'An error occurred';
+    throw new Error(message);
   }
 
   async uploadBankFile(file: File): Promise<UploadResponse> {
-    const formData = new FormData();
-    formData.append('file', file);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const response = await fetch(`${API_BASE_URL}/api/upload/bank`, {
-      method: 'POST',
-      headers: {
-        ...this.getAuthHeaders(),
-      },
-      body: formData,
-    });
+      const response = await this.client.post<UploadResponse>('/upload/bank', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Upload failed');
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
     }
-
-    return response.json();
   }
 
   async uploadAccountingFile(file: File): Promise<UploadResponse> {
-    const formData = new FormData();
-    formData.append('file', file);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
 
-    const response = await fetch(`${API_BASE_URL}/api/upload/accounting`, {
-      method: 'POST',
-      headers: {
-        ...this.getAuthHeaders(),
-      },
-      body: formData,
-    });
+      const response = await this.client.post<UploadResponse>('/upload/accounting', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Upload failed');
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
     }
-
-    return response.json();
   }
 
   async startReconciliation(bankUploadId: string, accountingUploadId: string, rules?: any): Promise<ReconcileResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/reconcile`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.getAuthHeaders()
-      },
-      body: JSON.stringify({
-        bank_file: bankUploadId,
-        accounting_file: accountingUploadId,
-        rules: rules
-      }),
-    });
+    try {
+      const response = await this.client.post<ReconcileResponse>('/reconciliation/reconcile', {
+        bankFileId: bankUploadId,
+        accountingFileId: accountingUploadId,
+        rules: rules,
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Reconciliation failed');
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
     }
-
-    return response.json();
   }
 
-  async getMatches(jobId: string, page: number = 1): Promise<MatchesResponse> {
-    const response = await fetch(`${API_BASE_URL}/api/reconcile/${jobId}/results?page=${page}`, {
-      headers: this.getAuthHeaders()
-    });
+  async getMatches(jobId: string): Promise<MatchesResponse> {
+    try {
+      const response = await this.client.get(`/reconciliation/${jobId}`);
+      const data = response.data;
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch matches');
+      return {
+        jobId: data.reconciliationId,
+        summary: data.summary,
+        matches: data.matches.map((m: any) => ({
+          id: m.id,
+          bankTx: m.bankTransaction,
+          accountingTx: m.accountingTransaction,
+          accountingTxs: m.accountingTransactions,
+          score: m.score,
+          rule: m.rule,
+          status: m.status || 'matched',
+          aiConfidence: m.aiConfidence,
+        })),
+        suspense: data.suspenseItems,
+        gapCalculations: data.gapCalculations,
+        validationResult: data.validationResult,
+      };
+    } catch (error) {
+      this.handleError(error as AxiosError);
     }
-
-    return response.json();
   }
 
   async validateMatch(jobId: string, matchId: string, action: string, accountCode?: string): Promise<{ ok: boolean }> {
-    const response = await fetch(`${API_BASE_URL}/api/reconcile/${jobId}/matches/${matchId}/validate`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...this.getAuthHeaders()
-      },
-      body: JSON.stringify({
+    try {
+      const response = await this.client.post(`/reconciliation/${jobId}/validate`, {
+        matchId,
         action,
         accountCode,
-      }),
-    });
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Validation failed');
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
     }
-
-    return response.json();
   }
 
   async exportResults(jobId: string, format: string = 'excel'): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/api/reconcile/${jobId}/export?format=${format}`, {
-      headers: this.getAuthHeaders()
-    });
+    try {
+      const response = await this.client.post(`/exports/reconciliation/${jobId}`, {
+        format,
+        includeDetails: true,
+        includeSummary: true,
+        includeGapAnalysis: true,
+        includeRegularization: true,
+        language: 'fr',
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Export failed');
+      const result = response.data;
+      return {
+        success: true,
+        downloadUrl: result.downloadUrl,
+        filename: result.fileName,
+      };
+    } catch (error) {
+      this.handleError(error as AxiosError);
     }
-
-    return response.json();
   }
 
   async getRegularizationEntries(jobId: string): Promise<any> {
-    const response = await fetch(`${API_BASE_URL}/api/reconcile/${jobId}/regularization`, {
-      headers: this.getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch regularization entries');
+    try {
+      const response = await this.client.post(`/reconciliation/${jobId}/regularize`, {});
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
     }
-
-    return response.json();
   }
 
   async listReconciliations(): Promise<any[]> {
-    const response = await fetch(`${API_BASE_URL}/api/reconciliations`, {
-      headers: this.getAuthHeaders()
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.detail || 'Failed to fetch reconciliations');
+    try {
+      const response = await this.client.get('/reconciliation');
+      return response.data;
+    } catch (error) {
+      return [];
     }
+  }
 
-    return response.json();
+  async getFileInfo(fileId: string): Promise<{ transactionCount: number }> {
+    try {
+      const response = await this.client.get(`/upload/file/${fileId}`);
+      return response.data;
+    } catch (error) {
+      this.handleError(error as AxiosError);
+    }
+  }
+
+  async recordLearning(matchId: string, isCorrect: boolean, bankTx: any, accountingTx: any, layerUsed: string): Promise<void> {
+    try {
+      await this.client.post('/learning/feedback', {
+        matchId,
+        isCorrect,
+        bankTx,
+        accountingTx,
+        layerUsed,
+      });
+    } catch (error) {
+      console.error('Failed to record learning:', error);
+    }
   }
 }
 

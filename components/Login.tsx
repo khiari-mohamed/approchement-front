@@ -39,12 +39,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister }) => {
 
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/auth/login`,
+        `${import.meta.env.VITE_API_BASE_URL}/auth/login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ 
-            username: username.trim(), 
+            identifier: username.trim(), 
             password 
           })
         }
@@ -58,7 +58,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToRegister }) => {
       const { access_token } = await response.json();
 
       const userResponse = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/auth/me`,
+        `${import.meta.env.VITE_API_BASE_URL}/auth/me`,
         {
           headers: { Authorization: `Bearer ${access_token}` }
         }
