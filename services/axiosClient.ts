@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
 
-// 5 minutes timeout for file uploads and processing
-const API_TIMEOUT = 300000;
+// 10 minutes timeout for reconciliation with large datasets
+const API_TIMEOUT = 600000;
 
 const getApiBaseUrl = (): string => {
   if (import.meta.env.VITE_API_BASE_URL) {
@@ -23,7 +23,7 @@ class AxiosClient {
     this.baseURL = getApiBaseUrl();
     this.instance = axios.create({
       baseURL: this.baseURL,
-      timeout: 300000,
+      timeout: 600000,
       headers: {
         'Content-Type': 'application/json',
       },

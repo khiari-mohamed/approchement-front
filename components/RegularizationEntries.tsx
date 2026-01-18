@@ -305,20 +305,24 @@ const RegularizationEntries: React.FC<RegularizationEntriesProps> = ({ jobId }) 
           <button 
             onClick={async () => {
               try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/reconcile/${jobId}/regularization/export`, {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/reconciliation/${jobId}/regularization/export`, {
                   headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                 });
                 const data = await response.json();
-                if (data.success && data.downloadUrl) {
+                if (data.success && data.csv) {
+                  // Create blob and download
+                  const blob = new Blob([data.csv], { type: 'text/csv;charset=utf-8;' });
                   const link = document.createElement('a');
-                  link.href = `${import.meta.env.VITE_API_BASE_URL}${data.downloadUrl}`;
+                  link.href = URL.createObjectURL(blob);
                   link.download = data.filename;
                   document.body.appendChild(link);
                   link.click();
                   document.body.removeChild(link);
+                  URL.revokeObjectURL(link.href);
                 }
               } catch (err) {
                 console.error('Export failed:', err);
+                alert('Erreur lors de l\'export');
               }
             }}
             className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg hover:from-blue-600 hover:to-cyan-600 transition-all shadow-lg flex items-center gap-2 font-medium"

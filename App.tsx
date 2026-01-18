@@ -151,31 +151,37 @@ const App: React.FC = () => {
             // Poll for transaction count if it's 0 (still processing)
             if (uploadResponse.transactionCount === 0) {
                 let attempts = 0;
+                const maxAttempts = 60; // 60 attempts = 2 minutes max
+                setLoadingMessage('Extraction IA en cours (DeepSeek + Claude)... Cela peut prendre jusqu\'à 2 minutes.');
                 const pollInterval = setInterval(async () => {
                     attempts++;
-                    if (attempts > 20) {
+                    if (attempts > maxAttempts) {
                         clearInterval(pollInterval);
                         setIsLoading(false);
                         setLoadingMessage('');
+                        setError('Timeout: L\'extraction prend trop de temps. Veuillez réessayer.');
                         return;
                     }
                     try {
                         const fileInfo = await apiService.getFileInfo(uploadResponse.fileId);
                         if (fileInfo.transactionCount > 0) {
                             setUploadProgress(100);
-                            setLoadingMessage('Extraction terminée!');
+                            setLoadingMessage(`Extraction terminée! ${fileInfo.transactionCount} transactions extraites.`);
                             setBankUpload(prev => prev ? {...prev, transactionCount: fileInfo.transactionCount} : null);
                             clearInterval(pollInterval);
                             setTimeout(() => {
                                 setIsLoading(false);
                                 setLoadingMessage('');
                                 setUploadProgress(0);
-                            }, 1000);
+                            }, 2000);
+                        } else {
+                            // Update progress message
+                            setLoadingMessage(`Extraction IA en cours... (${attempts * 2}s écoulées)`);
                         }
                     } catch (e) {
                         console.error('Failed to poll file info:', e);
                     }
-                }, 2000);
+                }, 2000); // Poll every 2 seconds
             } else {
                 setUploadProgress(100);
                 setTimeout(() => {
@@ -227,31 +233,37 @@ const App: React.FC = () => {
             // Poll for transaction count if it's 0 (still processing)
             if (uploadResponse.transactionCount === 0) {
                 let attempts = 0;
+                const maxAttempts = 60; // 60 attempts = 2 minutes max
+                setLoadingMessage('Extraction IA en cours (DeepSeek + Claude)... Cela peut prendre jusqu\'à 2 minutes.');
                 const pollInterval = setInterval(async () => {
                     attempts++;
-                    if (attempts > 20) {
+                    if (attempts > maxAttempts) {
                         clearInterval(pollInterval);
                         setIsLoading(false);
                         setLoadingMessage('');
+                        setError('Timeout: L\'extraction prend trop de temps. Veuillez réessayer.');
                         return;
                     }
                     try {
                         const fileInfo = await apiService.getFileInfo(uploadResponse.fileId);
                         if (fileInfo.transactionCount > 0) {
                             setUploadProgress(100);
-                            setLoadingMessage('Extraction terminée!');
+                            setLoadingMessage(`Extraction terminée! ${fileInfo.transactionCount} écritures extraites.`);
                             setAccountingUpload(prev => prev ? {...prev, transactionCount: fileInfo.transactionCount} : null);
                             clearInterval(pollInterval);
                             setTimeout(() => {
                                 setIsLoading(false);
                                 setLoadingMessage('');
                                 setUploadProgress(0);
-                            }, 1000);
+                            }, 2000);
+                        } else {
+                            // Update progress message
+                            setLoadingMessage(`Extraction IA en cours... (${attempts * 2}s écoulées)`);
                         }
                     } catch (e) {
                         console.error('Failed to poll file info:', e);
                     }
-                }, 2000);
+                }, 2000); // Poll every 2 seconds
             } else {
                 setUploadProgress(100);
                 setTimeout(() => {
@@ -281,7 +293,7 @@ const App: React.FC = () => {
         setError(null);
         setResult(null);
         setIsLoading(true);
-        setLoadingMessage("Moteur de rapprochement en cours... Application des règles de matching.");
+        setLoadingMessage("Moteur de rapprochement en cours... Application des 6 couches de matching (peut prendre 2-5 minutes).");
 
         try {
             // Get current token

@@ -212,7 +212,7 @@ export function LearningDashboard() {
             the system adjusts its internal weights using gradient descent.
           </p>
           <ul className="list-disc list-inside space-y-1 ml-4 text-white/70">
-            <li><strong>Layer Weights:</strong> Adjusts trust in Backend Logic, Gemini AI, Claude AI, Regex, and Historical patterns</li>
+            <li><strong>Layer Weights:</strong> Adjusts trust in Backend Logic, DeepSeek AI, Claude AI, Regex, and Historical patterns</li>
             <li><strong>Feature Weights:</strong> Learns which features (amount, date, description) matter most</li>
             <li><strong>Pattern Storage:</strong> Remembers successful matching patterns for future use</li>
             <li><strong>Continuous Improvement:</strong> Gets smarter with every reconciliation</li>

@@ -1,5 +1,4 @@
-
-import React, { useMemo } from 'react';
+import React from 'react';
 import type { MatchesResponse } from '../services/apiService';
 
 interface ReconciliationReportProps {
@@ -9,69 +8,6 @@ interface ReconciliationReportProps {
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('fr-TN', { style: 'currency', currency: 'TND' }).format(amount);
 };
-
-const TransactionTable: React.FC<{ title: string, transactions: Transaction[], headers: string[] }> = ({ title, transactions, headers }) => (
-    <div className="mb-6">
-        <h4 className="text-md font-semibold text-slate-700 mb-2">{title} ({transactions.length})</h4>
-        <div className="overflow-x-auto bg-white rounded-lg shadow-sm border border-slate-200">
-            <table className="w-full text-sm text-left text-slate-600">
-                <thead className="text-xs text-slate-700 uppercase bg-slate-100">
-                    <tr>
-                        {headers.map(h => <th key={h} scope="col" className="px-4 py-3">{h}</th>)}
-                    </tr>
-                </thead>
-                <tbody>
-                    {transactions.length > 0 ? transactions.map((tx, index) => (
-                        <tr key={index} className="border-b hover:bg-slate-50">
-                            <td className="px-4 py-2">{tx.date}</td>
-                            <td className="px-4 py-2">{tx.libelle}</td>
-                            <td className="px-4 py-2 text-right font-mono">{formatCurrency(tx.montant)}</td>
-                        </tr>
-                    )) : (
-                        <tr>
-                            <td colSpan={3} className="text-center py-4 text-slate-500">Aucune opération</td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
-        </div>
-    </div>
-);
-
-const MatchedTransactionTable: React.FC<{ title: string, transactions: MatchedTransaction[] }> = ({ title, transactions }) => (
-    <div className="mb-6">
-         <h4 className="text-md font-semibold text-slate-700 mb-2">{title} ({transactions.length})</h4>
-         <div className="overflow-x-auto bg-white rounded-lg shadow-sm border border-slate-200">
-            <table className="w-full text-sm text-left text-slate-600">
-                <thead className="text-xs text-slate-700 uppercase bg-slate-100">
-                    <tr>
-                        <th scope="col" className="px-4 py-3">Date (Banque)</th>
-                        <th scope="col" className="px-4 py-3">Libellé (Banque)</th>
-                        <th scope="col" className="px-4 py-3">Date (Compta)</th>
-                        <th scope="col" className="px-4 py-3">Libellé (Compta)</th>
-                        <th scope="col" className="px-4 py-3 text-right">Montant</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {transactions.length > 0 ? transactions.map((match, index) => (
-                        <tr key={index} className="border-b hover:bg-slate-50">
-                            <td className="px-4 py-2">{match.transactionBancaire.date}</td>
-                            <td className="px-4 py-2">{match.transactionBancaire.libelle}</td>
-                            <td className="px-4 py-2">{match.transactionComptable.date}</td>
-                            <td className="px-4 py-2">{match.transactionComptable.libelle}</td>
-                            <td className="px-4 py-2 text-right font-mono">{formatCurrency(match.transactionBancaire.montant)}</td>
-                        </tr>
-                    )) : (
-                        <tr>
-                            <td colSpan={5} className="text-center py-4 text-slate-500">Aucune correspondance trouvée</td>
-                        </tr>
-                    )}
-                </tbody>
-            </table>
-        </div>
-    </div>
-);
-
 
 const ReconciliationReport: React.FC<ReconciliationReportProps> = ({ result }) => {
     const { summary, matches } = result;
@@ -88,15 +24,15 @@ const ReconciliationReport: React.FC<ReconciliationReportProps> = ({ result }) =
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                     <h4 className="font-semibold text-blue-800">Total Bancaire</h4>
-                    <p className="text-2xl font-bold text-blue-900">{formatCurrency(summary.bankTotal)}</p>
+                    <p className="text-2xl font-bold text-blue-900">{formatCurrency(Math.abs(summary.bankTotal))}</p>
                 </div>
                 <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                     <h4 className="font-semibold text-green-800">Total Comptable</h4>
-                    <p className="text-2xl font-bold text-green-900">{formatCurrency(summary.accountingTotal)}</p>
+                    <p className="text-2xl font-bold text-green-900">{formatCurrency(Math.abs(summary.accountingTotal))}</p>
                 </div>
                 <div className={`p-4 rounded-lg border ${Math.abs(ecartFinal) < 0.01 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                     <h4 className={`font-semibold ${Math.abs(ecartFinal) < 0.01 ? 'text-green-800' : 'text-red-800'}`}>Écart Résiduel</h4>
-                    <p className={`text-2xl font-bold ${Math.abs(ecartFinal) < 0.01 ? 'text-green-900' : 'text-red-900'}`}>{formatCurrency(ecartFinal)}</p>
+                    <p className={`text-2xl font-bold ${Math.abs(ecartFinal) < 0.01 ? 'text-green-900' : 'text-red-900'}`}>{formatCurrency(Math.abs(ecartFinal))}</p>
                 </div>
             </div>
 

@@ -13,9 +13,21 @@ const Reports: React.FC<ReportsProps> = ({ result, onExport }) => {
 
   // Calculate additional metrics
   const exactMatches = matches.filter(m => m.rule === 'exact').length;
-  const fuzzyMatches = matches.filter(m => m.rule === 'fuzzy_strong' || m.rule === 'fuzzy_weak').length;
-  const aiMatches = matches.filter(m => m.rule === 'ai_assisted').length;
-  const groupMatches = matches.filter(m => m.rule === 'group').length;
+  const fuzzyMatches = matches.filter(m => 
+    m.rule === 'fuzzy_strong' || 
+    m.rule === 'fuzzy_weak' || 
+    m.rule === 'exact_amount_same_date' ||
+    m.rule === 'large_amount_date' ||
+    m.rule === 'transfer_opposite_sign'
+  ).length;
+  const aiMatches = matches.filter(m => 
+    m.rule === 'ai_assisted' || 
+    m.rule === 'historical_pattern'
+  ).length;
+  const groupMatches = matches.filter(m => 
+    m.rule === 'group' || 
+    m.rule === 'commission_vat_split'
+  ).length;
 
   const highScoreMatches = matches.filter(m => m.score >= 0.9).length;
   const mediumScoreMatches = matches.filter(m => m.score >= 0.7 && m.score < 0.9).length;
@@ -350,13 +362,14 @@ const Reports: React.FC<ReportsProps> = ({ result, onExport }) => {
           <button
             onClick={async () => {
               try {
-                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/reconcile/${result.jobId}/regularization/export`, {
+                const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/reconciliation/${result.jobId}/regularization/export`, {
                   headers: { 'Authorization': `Bearer ${localStorage.getItem('auth_token')}` }
                 });
                 const data = await response.json();
-                if (data.success && data.downloadUrl) {
+                if (data.success && data.csv) {
+                  const blob = new Blob([data.csv], { type: 'text/csv;charset=utf-8;' });
                   const link = document.createElement('a');
-                  link.href = `${import.meta.env.VITE_API_BASE_URL}${data.downloadUrl}`;
+                  link.href = URL.createObjectURL(blob);
                   link.download = data.filename;
                   document.body.appendChild(link);
                   link.click();
